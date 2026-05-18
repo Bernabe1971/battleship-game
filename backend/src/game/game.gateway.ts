@@ -22,6 +22,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const code = this.game.createRoom(client.id);
     client.join(code);
     client.emit('room-created', { code });
+     this.broadcastState(code);
   }
 
   @SubscribeMessage('join-game')
