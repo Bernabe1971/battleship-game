@@ -1,0 +1,123 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f172a;
+  color: #f1f5f9;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+input, select {
+  font-family: inherit;
+  outline: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: opacity 0.15s, transform 0.1s;
+  user-select: none;
+}
+
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-blue  { background: #2563eb; color: #fff; }
+.btn-red   { background: #dc2626; color: #fff; }
+.btn-green { background: #16a34a; color: #fff; }
+.btn-gray  { background: #334155; color: #f1f5f9; }
+.btn-amber { background: #d97706; color: #fff; }
+
+.card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tag-A { background: #1d4ed8; color: #fff; }
+.tag-B { background: #dc2626; color: #fff; }
+
+.grid-wrap {
+  display: inline-block;
+  border: 2px solid #334155;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.grid-row { display: flex; }
+
+.grid-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #1e293b;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cell-empty  { background: #1e3a5f; }
+.cell-ship   { background: #2563eb; }
+.cell-hit    { background: #dc2626; }
+.cell-miss   { background: #475569; }
+.cell-preview-ok  { background: #22c55e; opacity: 0.8; }
+.cell-preview-bad { background: #ef4444; opacity: 0.7; }
+.cell-voted  { background: #f59e0b; }
+.cell-label  { background: #0f172a; color: #64748b; font-size: 11px; cursor: default; }
+
+.timer-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: #334155;
+  overflow: hidden;
+}
+.timer-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.9s linear, background 0.3s;
+}
+
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
