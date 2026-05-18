@@ -12,10 +12,17 @@ interface Props {
 export function HostView({ gameState, roomCode, onStart, onRestart }: Props) {
   const joinUrl = `${window.location.origin}/?code=${roomCode}`;
 
-  if (!gameState) {
+if (!gameState) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 20 }}>
-        <div className="pulse" style={{ color: '#64748b' }}>Conectando...</div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 20, padding: 24 }}>
+        <div style={{ background: '#fff', padding: 12, borderRadius: 8 }}>
+          <QRCodeSVG value={joinUrl} size={200} />
+        </div>
+        <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: 8, color: '#60a5fa' }}>{roomCode}</div>
+        <div style={{ color: '#64748b', fontSize: 13, textAlign: 'center' }}>
+          Esperando jugadores...<br />
+          <span style={{ color: '#94a3b8', wordBreak: 'break-all' }}>{joinUrl}</span>
+        </div>
       </div>
     );
   }
