@@ -32,6 +32,7 @@ export interface ActiveVote {
 export interface GameRoom {
   code: string;
   hostSocketId: string;
+  hostToken: string;
   players: Map<string, Player>;
   teams: { A: TeamState; B: TeamState };
   phase: GamePhase;

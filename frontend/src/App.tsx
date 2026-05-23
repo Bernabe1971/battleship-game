@@ -20,7 +20,22 @@ export default function App() {
   useEffect(() => {
     socket.connect();
 
-    socket.on('room-created', ({ code }: { code: string }) => {
+    socket.on('connect', () => {
+      const token = localStorage.getItem('hostToken');
+      const savedCode = localStorage.getItem('hostRoomCode');
+      if (token && savedCode) {
+        socket.emit('reclaim-host', { roomCode: savedCode, hostToken: token });
+      }
+    });
+
+    socket.on('room-created', ({ code, hostToken }: { code: string; hostToken: string }) => {
+      localStorage.setItem('hostToken', hostToken);
+      localStorage.setItem('hostRoomCode', code);
+      setRoomCode(code);
+      setRole('host');
+    });
+
+    socket.on('host-reclaimed', ({ code }: { code: string }) => {
       setRoomCode(code);
       setRole('host');
     });
@@ -50,6 +65,8 @@ export default function App() {
   }, []);
 
   function handleHost() {
+    localStorage.removeItem('hostToken');
+    localStorage.removeItem('hostRoomCode');
     setError('');
     socket.emit('host-game');
   }

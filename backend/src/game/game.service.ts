@@ -22,13 +22,15 @@ function randomCode(): string {
 export class GameService {
   private rooms = new Map<string, GameRoom>();
 
-  createRoom(hostSocketId: string): string {
+  createRoom(hostSocketId: string): { code: string; hostToken: string } {
     let code: string;
     do { code = randomCode(); } while (this.rooms.has(code));
 
+    const hostToken = uuid();
     this.rooms.set(code, {
       code,
       hostSocketId,
+      hostToken,
       players: new Map(),
       teams: { A: emptyTeam(), B: emptyTeam() },
       phase: 'waiting',
@@ -36,7 +38,14 @@ export class GameService {
       vote: null,
       winner: null,
     });
-    return code;
+    return { code, hostToken };
+  }
+
+  reclaimHost(code: string, token: string, newSocketId: string): boolean {
+    const room = this.rooms.get(code);
+    if (!room || room.hostToken !== token) return false;
+    room.hostSocketId = newSocketId;
+    return true;
   }
 
   getRoom(code: string): GameRoom | undefined {

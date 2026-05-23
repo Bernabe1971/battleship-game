@@ -20,10 +20,25 @@ export class GameGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('host-game')
   handleHostGame(@ConnectedSocket() client: Socket) {
-    const code = this.game.createRoom(client.id);
+    const { code, hostToken } = this.game.createRoom(client.id);
     client.join(code);
-    client.emit('room-created', { code });
-     this.broadcastState(code);
+    client.emit('room-created', { code, hostToken });
+    this.broadcastState(code);
+  }
+
+  @SubscribeMessage('reclaim-host')
+  handleReclaimHost(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomCode: string; hostToken: string },
+  ) {
+    const ok = this.game.reclaimHost(data.roomCode, data.hostToken, client.id);
+    if (!ok) {
+      client.emit('error', { message: 'No se pudo recuperar la sesión de host.' });
+      return;
+    }
+    client.join(data.roomCode);
+    client.emit('host-reclaimed', { code: data.roomCode });
+    this.broadcastState(data.roomCode);
   }
 
   @SubscribeMessage('join-game')
