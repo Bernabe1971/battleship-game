@@ -9,7 +9,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 
-@WebSocketGateway({ cors: { origin: '*' }, pingInterval: 10000, pingTimeout: 5000 })
+@WebSocketGateway({ cors: { origin: '*' }, pingInterval: 25000, pingTimeout: 60000 })
 
 export class GameGateway implements OnGatewayDisconnect {
   @WebSocketServer() server: Server;
@@ -126,7 +126,7 @@ export class GameGateway implements OnGatewayDisconnect {
 
     this.broadcastState(code);
 
-    let seconds = 12;
+    let seconds = 10;
     const timer = setInterval(() => {
       const r = this.game.getRoom(code);
       if (!r || r.phase !== 'battle' || !r.vote) {

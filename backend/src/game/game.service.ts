@@ -144,7 +144,7 @@ export class GameService {
   startVote(code: string): boolean {
     const room = this.rooms.get(code);
     if (!room || room.phase !== 'battle' || room.vote) return false;
-    room.vote = { votes: new Map(), secondsLeft: 20 };
+    room.vote = { votes: new Map(), secondsLeft: 10 };
     return true;
   }
 
