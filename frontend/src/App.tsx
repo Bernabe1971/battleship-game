@@ -11,8 +11,8 @@ export default function App() {
   const [role, setRole] = useState<Role>('none');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [roomCode, setRoomCode] = useState('');
-  const [playerName, setPlayerName] = useState('');
-  const [playerTeam, setPlayerTeam] = useState<TeamId>('A');
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('playerName') || '');
+  const [playerTeam, setPlayerTeam] = useState<TeamId>(() => (localStorage.getItem('playerTeam') as TeamId) || 'A');
   const [lastAttack, setLastAttack] = useState<AttackResult | null>(null);
   const [seconds, setSeconds] = useState(20);
   const [error, setError] = useState('');
@@ -25,6 +25,12 @@ export default function App() {
       const savedCode = localStorage.getItem('hostRoomCode');
       if (token && savedCode) {
         socket.emit('reclaim-host', { roomCode: savedCode, hostToken: token });
+        return;
+      }
+      const pToken = localStorage.getItem('playerToken');
+      const pCode = localStorage.getItem('playerRoomCode');
+      if (pToken && pCode) {
+        socket.emit('reclaim-player', { roomCode: pCode, playerToken: pToken });
       }
     });
 
@@ -38,6 +44,29 @@ export default function App() {
     socket.on('host-reclaimed', ({ code }: { code: string }) => {
       setRoomCode(code);
       setRole('host');
+    });
+
+    socket.on('player-joined', ({ token, code, team, name }: { token: string; code: string; team: TeamId; name: string }) => {
+      localStorage.setItem('playerToken', token);
+      localStorage.setItem('playerRoomCode', code);
+      if (name) localStorage.setItem('playerName', name);
+      if (team) localStorage.setItem('playerTeam', team);
+      setRoomCode(code);
+      setRole('player');
+    });
+
+    socket.on('player-reclaimed', ({ code, team, name }: { code: string; team: TeamId; name: string }) => {
+      setRoomCode(code);
+      if (name) setPlayerName(name);
+      if (team) setPlayerTeam(team);
+      setRole('player');
+    });
+
+    socket.on('reclaim-failed', ({ message }: { message: string }) => {
+      localStorage.removeItem('playerToken');
+      localStorage.removeItem('playerRoomCode');
+      setRole('none');
+      setError(message || 'Tu sesión expiró. Vuelve a unirte.');
     });
 
     socket.on('game-state', (state: GameState) => {
@@ -64,9 +93,38 @@ export default function App() {
     return () => { socket.disconnect(); };
   }, []);
 
+  // Mantiene la pantalla del teléfono despierta mientras el usuario es jugador,
+  // para que no se bloquee sola durante la partida y pierda la conexión.
+  useEffect(() => {
+    if (role !== 'player') return;
+    let wakeLock: any = null;
+    let cancelled = false;
+    async function requestLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch {
+        // Si el navegador no lo permite, se ignora sin romper nada.
+      }
+    }
+    function handleVisibility() {
+      if (document.visibilityState === 'visible' && !cancelled) requestLock();
+    }
+    requestLock();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (wakeLock) { try { wakeLock.release(); } catch {} }
+    };
+  }, [role]);
+
   function handleHost() {
     localStorage.removeItem('hostToken');
     localStorage.removeItem('hostRoomCode');
+    localStorage.removeItem('playerToken');
+    localStorage.removeItem('playerRoomCode');
     setError('');
     socket.emit('host-game');
   }

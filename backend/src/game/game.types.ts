@@ -19,9 +19,11 @@ export interface TeamState {
 
 export interface Player {
   socketId: string;
+  token: string;
   name: string;
   team: TeamId;
   isCaptain: boolean;
+  connected: boolean;
 }
 
 export interface ActiveVote {

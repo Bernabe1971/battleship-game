@@ -52,6 +52,31 @@ export class GameGateway implements OnGatewayDisconnect {
       return;
     }
     client.join(data.roomCode);
+    client.emit('player-joined', {
+      token: player.token,
+      code: data.roomCode,
+      team: player.team,
+      name: player.name,
+    });
+    this.broadcastState(data.roomCode);
+  }
+
+  @SubscribeMessage('reclaim-player')
+  handleReclaimPlayer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomCode: string; playerToken: string },
+  ) {
+    const player = this.game.reclaimPlayer(data.roomCode, data.playerToken, client.id);
+    if (!player) {
+      client.emit('reclaim-failed', { message: 'No se pudo recuperar tu lugar. Vuelve a unirte.' });
+      return;
+    }
+    client.join(data.roomCode);
+    client.emit('player-reclaimed', {
+      code: data.roomCode,
+      team: player.team,
+      name: player.name,
+    });
     this.broadcastState(data.roomCode);
   }
 
@@ -113,7 +138,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    const code = this.game.removePlayer(client.id);
+    const code = this.game.markDisconnected(client.id);
     if (code) this.broadcastState(code);
   }
 

@@ -65,21 +65,46 @@ export class GameService {
     const teamPlayers = [...room.players.values()].filter(p => p.team === team);
     const isCaptain = teamPlayers.length === 0;
 
-    const player: Player = { socketId, name, team, isCaptain };
+    const player: Player = { socketId, token: uuid(), name, team, isCaptain, connected: true };
     room.players.set(socketId, player);
     return player;
   }
 
-  removePlayer(socketId: string): string | null {
+  // Reconecta a un jugador que se cayó (pantalla bloqueada, internet lento, etc.)
+  // usando su token estable. Funciona aunque el juego ya haya comenzado.
+  reclaimPlayer(code: string, token: string, newSocketId: string): Player | null {
+    const room = this.rooms.get(code);
+    if (!room) return null;
+
+    let found: Player | undefined;
+    let oldKey: string | undefined;
+    for (const [sid, p] of room.players) {
+      if (p.token === token) { found = p; oldKey = sid; break; }
+    }
+    if (!found || oldKey === undefined) return null;
+
+    room.players.delete(oldKey);
+    found.socketId = newSocketId;
+    found.connected = true;
+    room.players.set(newSocketId, found);
+    return found;
+  }
+
+  // En vez de eliminar al jugador (lo que rompía el juego), marcamos su
+  // conexión como caída para conservar su lugar. Solo se elimina si el
+  // juego aún no ha iniciado (fase de espera).
+  markDisconnected(socketId: string): string | null {
     for (const [code, room] of this.rooms) {
       if (room.players.has(socketId)) {
-        const leavingPlayer = room.players.get(socketId)!;
-        room.players.delete(socketId);
-
-        // Reassign captain if needed
-        if (leavingPlayer.isCaptain) {
-          const nextInTeam = [...room.players.values()].find(p => p.team === leavingPlayer.team);
-          if (nextInTeam) nextInTeam.isCaptain = true;
+        if (room.phase === 'waiting') {
+          const leavingPlayer = room.players.get(socketId)!;
+          room.players.delete(socketId);
+          if (leavingPlayer.isCaptain) {
+            const nextInTeam = [...room.players.values()].find(p => p.team === leavingPlayer.team);
+            if (nextInTeam) nextInTeam.isCaptain = true;
+          }
+        } else {
+          room.players.get(socketId)!.connected = false;
         }
         return code;
       }
@@ -263,6 +288,7 @@ export class GameService {
         team: p.team,
         isCaptain: p.isCaptain,
         isMe: p.socketId === requestingSocketId,
+        connected: p.connected,
       })),
       teams: {
         A: {
